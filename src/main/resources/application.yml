@@ -1,0 +1,35 @@
+server:
+  port: 8081
+mybatis:
+  mapper-locations: classpath:mapper/*Mapper.xml
+
+
+spring:
+  datasource:
+    username: root
+    password: Seeyon123456
+    url: jdbc:mysql://localhost:3306/springboot_test?autoReconnection=true&useSSL=true&serverTimezone=Asia/Shanghai
+  application:
+#    name: mybatis-mysql
+    name: service-config
+  # 注册中心地址
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+      config:
+        # nacos地址
+        server-addr: localhost:18848
+        file-extension: properties
+        group: DEFAULT_GROUP
+  profiles:
+    active: dev
+
+
+
+nacos:
+  value: 12345
+ # 加这个 feignfallback才生效
+feign:
+  hystrix:
+    enabled: true
