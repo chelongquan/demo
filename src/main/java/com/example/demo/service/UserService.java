@@ -28,6 +28,11 @@ public interface UserService {
 	
 	void create(String name);
 	
-	public List<OrgUser> query(String name);
+	List<OrgUser> query(String name);
 	
+	OrgUser select(int id);
+	
+	OrgUser selectByFlag(String cacheflag,int id);
+	
+	void lock(int id);
 }

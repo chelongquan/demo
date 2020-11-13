@@ -18,12 +18,18 @@ import com.example.demo.entity.OrgUserExample;
 import com.example.demo.mapper.OrgUserMapper;
 import com.example.demo.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.Redisson;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -38,6 +44,13 @@ public class UserServiceImpl implements UserService {
 	private OrgUserMapper orgUserMapper;
 	@Value("${server.port}")
 	private int port;
+	
+	@Autowired
+	private UserService userService;
+	@Autowired
+	private RedissonClient redissonClient;
+	
+	
 	
 	@Transactional
 	@Override
@@ -56,4 +69,40 @@ public class UserServiceImpl implements UserService {
 		return result;
 	}
 	
+	@Override
+	@Cacheable(value = "cache",key="#id")
+	public OrgUser select(int id) {
+		log.info("select：port="+port);
+		return orgUserMapper.selectByPrimaryKey(id);
+	}
+	
+	@Override
+	public OrgUser selectByFlag(String cacheflag,int id) {
+		if("Y".equals(cacheflag)){
+			// 走缓存
+			log.info("userService.select(id)");
+			return	userService.select(id);
+		}
+		// 不走缓存
+		log.info("this.select(id)");
+		return this.select(id);
+	}
+	
+	@Override
+	public void lock(int id) {
+		RLock lock = redissonClient.getLock("redissonkey");
+		try {
+			lock.lock();
+			
+			log.info(id+" is locked" );
+			
+			TimeUnit.MINUTES.sleep(1);
+		} catch (InterruptedException e) {
+			//e.printStackTrace();
+			log.error("", e);
+		} finally {
+			lock.unlock();
+			log.info(id+" is unlocked" );
+		}
+	}
 }
